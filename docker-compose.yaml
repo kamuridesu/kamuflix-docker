@@ -1,0 +1,96 @@
+services:
+  sonarr:
+    container_name: sonarr
+    image: ghcr.io/hotio/sonarr:release-4.0.5.1710
+    restart: unless-stopped
+    ports:
+      - "8989:8989"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - UMASK=002
+      - TZ=$TZ_INFO
+    volumes:
+      - $SONARR_HOME:/data
+      - $SONARR_CONFIG:/config
+  
+  radarr:
+    container_name: radarr
+    image: ghcr.io/hotio/radarr:release-5.7.0.8882
+    restart: unless-stopped
+    ports:
+      - "7878:7878"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - UMASK=002
+      - TZ=$TZ_INFO
+    volumes:
+      - $RADARR_CONFIG:/config
+      - $RADARR_HOME:/data
+
+  prowlarr:
+    container_name: prowlarr
+    image: ghcr.io/hotio/prowlarr:release-1.19.0.4568
+    restart: unless-stopped
+    ports:
+      - "9696:9696"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - UMASK=002
+      - TZ=$TZ_INFO
+    volumes:
+      - $PROWLARR_CONFIG:/config
+
+  bazarr:
+    container_name: bazarr
+    image: ghcr.io/hotio/bazarr:release-1.4.3
+    restart: unless-stopped
+    ports:
+      - "6767:6767"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - UMASK=002
+      - TZ=$TZ_INFO
+      - WEBUI_PORTS=6767/tcp,6767/udp
+    volumes:
+      - $BAZARR_CONFIG:/config
+      - $BAZARR_HOME:/data
+
+  jellyfin:
+    container_name: jellyfin
+    image: ghcr.io/hotio/jellyfin:release-10.9.7
+    restart: unless-stopped
+    ports:
+      - "8096:8096"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - UMASK=002
+      - TZ=$TZ_INFO
+    volumes:
+      - $JELLYFIN_CONFIG:/config
+      - $JELLYFIN_HOME:/data
+
+  jellyseerr:
+    container_name: jellyseerr
+    image: ghcr.io/hotio/jellyseerr:release-1.9.2
+    restart: unless-stopped
+    ports:
+      - "5055:5055"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - UMASK=002
+      - TZ=$TZ_INFO
+    volumes:
+      - $JELLYSEERR_CONFIG:/config
+
+  haproxy:
+    build: .
+    container_name: haproxy
+    ports:
+      - 80:80
+      - 81:81
