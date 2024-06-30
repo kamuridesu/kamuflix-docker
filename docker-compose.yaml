@@ -91,6 +91,7 @@ services:
   haproxy:
     build: .
     container_name: haproxy
+    restart: unless-stopped
     ports:
       - 80:80
       - 81:81
