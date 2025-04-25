@@ -1,10 +1,82 @@
 services:
-  sonarr:
-    container_name: sonarr
-    image: ghcr.io/hotio/sonarr:release-4.0.5.1710
+  ip_syncer:
+    image: kamuri/ip-syncer:0.0.2
+    restart: unless-stopped
+    env_file: .env
+    container_name: syncer
+    deploy:
+      resources:
+        limits:
+          cpus: "0.01"
+          memory: 10M
+
+  haproxy:
+    container_name: haproxy
+    build:
+      context: .
+      args:
+        IP_ADDR: ${IP_ADDR}
+    ports:
+      - 80:80
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.02"
+          memory: 20M
+
+  dashy:
+    container_name: dashy
+    image: lissy93/dashy
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - $DASHY_CONFIG:/app/user-data
+    ports:
+      - "7575:8080"
+    healthcheck:
+      test: ["CMD", "node", "/app/services/healthcheck"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  jellyfin:
+    container_name: jellyfin
+    image: ghcr.io/jellyfin/jellyfin:10.10.7
     restart: unless-stopped
     ports:
-      - "8989:8989"
+      - "8096:8096"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - UMASK=002
+      - TZ=$TZ_INFO
+    volumes:
+      - $JELLYFIN_CONFIG:/config
+      - $JELLYFIN_HOME:/data
+
+  jellyseerr:
+    image: ghcr.io/fallenbagel/jellyseerr:2.5.2
+    container_name: jellyseerr
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - UMASK=002
+      - TZ=$TZ_INFO
+    volumes:
+      - $JELLYSEERR_CONFIG:/app/config
+    ports:
+      - 5055:5055
+
+  sonarr:
+    container_name: sonarr
+    image: ghcr.io/hotio/sonarr:release-4.0.14.2939
+    restart: unless-stopped
+    ports:
+      - 8989:8989
     environment:
       - PUID=1000
       - PGID=1000
@@ -13,10 +85,10 @@ services:
     volumes:
       - $SONARR_HOME:/data
       - $SONARR_CONFIG:/config
-  
+
   radarr:
     container_name: radarr
-    image: ghcr.io/hotio/radarr:release-5.7.0.8882
+    image: ghcr.io/hotio/radarr:release-5.21.1.9799
     restart: unless-stopped
     ports:
       - "7878:7878"
@@ -31,7 +103,7 @@ services:
 
   prowlarr:
     container_name: prowlarr
-    image: ghcr.io/hotio/prowlarr:release-1.19.0.4568
+    image: ghcr.io/hotio/prowlarr:release-1.32.2.4987
     restart: unless-stopped
     ports:
       - "9696:9696"
@@ -45,7 +117,7 @@ services:
 
   bazarr:
     container_name: bazarr
-    image: ghcr.io/hotio/bazarr:release-1.4.3
+    image: ghcr.io/hotio/bazarr:release-1.5.1
     restart: unless-stopped
     ports:
       - "6767:6767"
@@ -59,39 +131,14 @@ services:
       - $BAZARR_CONFIG:/config
       - $BAZARR_HOME:/data
 
-  jellyfin:
-    container_name: jellyfin
-    image: ghcr.io/hotio/jellyfin:release-10.9.7
+  flaresolverr:
+    container_name: flaresolverr
     restart: unless-stopped
+    image: ghcr.io/flaresolverr/flaresolverr:v3.3.21
     ports:
-      - "8096:8096"
+      - 8191:8191
     environment:
       - PUID=1000
       - PGID=1000
       - UMASK=002
       - TZ=$TZ_INFO
-    volumes:
-      - $JELLYFIN_CONFIG:/config
-      - $JELLYFIN_HOME:/data
-
-  jellyseerr:
-    container_name: jellyseerr
-    image: ghcr.io/hotio/jellyseerr:release-1.9.2
-    restart: unless-stopped
-    ports:
-      - "5055:5055"
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - UMASK=002
-      - TZ=$TZ_INFO
-    volumes:
-      - $JELLYSEERR_CONFIG:/config
-
-  haproxy:
-    build: .
-    container_name: haproxy
-    restart: unless-stopped
-    ports:
-      - 80:80
-      - 81:81
