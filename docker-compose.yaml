@@ -142,3 +142,25 @@ services:
       - PGID=1000
       - UMASK=002
       - TZ=$TZ_INFO
+
+  prometheus:
+    container_name: prometheus
+    image: quay.io/prometheus/prometheus:v3.3.0
+    restart: unless-stopped
+    environment:
+      - TZ=America/Fortaleza
+    volumes:
+      - ./prometheus:/etc/prometheus
+    ports:
+      - 9090:9090
+
+  node_exporter:
+    container_name: node_exporter
+    image: quay.io/prometheus/node-exporter:latest
+    command:
+      - "--path.rootfs=/host"
+    network_mode: host
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - "/:/host:ro,rslave"
