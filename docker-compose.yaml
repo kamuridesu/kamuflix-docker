@@ -18,12 +18,13 @@ services:
         IP_ADDR: ${IP_ADDR}
     ports:
       - 80:80
+      - 81:81
     restart: unless-stopped
     deploy:
       resources:
         limits:
           cpus: "0.02"
-          memory: 20M
+          memory: 30M
 
   dashy:
     container_name: dashy
@@ -44,7 +45,7 @@ services:
 
   jellyfin:
     container_name: jellyfin
-    image: ghcr.io/jellyfin/jellyfin:10.10.7
+    image: ghcr.io/jellyfin/jellyfin:10.11.3
     restart: unless-stopped
     ports:
       - "8096:8096"
@@ -56,9 +57,18 @@ services:
     volumes:
       - $JELLYFIN_CONFIG:/config
       - $JELLYFIN_HOME:/data
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - "108"
+    deploy:
+      resources:
+        limits:
+          cpus: 2
+          memory: 2G
 
   jellyseerr:
-    image: ghcr.io/fallenbagel/jellyseerr:2.5.2
+    image: ghcr.io/fallenbagel/jellyseerr:2.7.3
     container_name: jellyseerr
     restart: unless-stopped
     environment:
@@ -70,10 +80,15 @@ services:
       - $JELLYSEERR_CONFIG:/app/config
     ports:
       - 5055:5055
+    deploy:
+      resources:
+        limits:
+          cpus: 0.5
+          memory: 600M
 
   sonarr:
     container_name: sonarr
-    image: ghcr.io/hotio/sonarr:release-4.0.14.2939
+    image: ghcr.io/hotio/sonarr:release-4.0.16.2944
     restart: unless-stopped
     ports:
       - 8989:8989
@@ -85,10 +100,15 @@ services:
     volumes:
       - $SONARR_HOME:/data
       - $SONARR_CONFIG:/config
+    deploy:
+      resources:
+        limits:
+          cpus: 0.5
+          memory: 300M
 
   radarr:
     container_name: radarr
-    image: ghcr.io/hotio/radarr:release-5.21.1.9799
+    image: ghcr.io/hotio/radarr:release-6.0.4.10291
     restart: unless-stopped
     ports:
       - "7878:7878"
@@ -100,10 +120,15 @@ services:
     volumes:
       - $RADARR_CONFIG:/config
       - $RADARR_HOME:/data
+    deploy:
+      resources:
+        limits:
+          cpus: 0.5
+          memory: 300M
 
   prowlarr:
     container_name: prowlarr
-    image: ghcr.io/hotio/prowlarr:release-1.32.2.4987
+    image: ghcr.io/hotio/prowlarr:release-2.3.0.5236
     restart: unless-stopped
     ports:
       - "9696:9696"
@@ -114,10 +139,15 @@ services:
       - TZ=$TZ_INFO
     volumes:
       - $PROWLARR_CONFIG:/config
+    deploy:
+      resources:
+        limits:
+          cpus: 0.6
+          memory: 500M
 
   bazarr:
     container_name: bazarr
-    image: ghcr.io/hotio/bazarr:release-1.5.1
+    image: ghcr.io/hotio/bazarr:release-1.5.3
     restart: unless-stopped
     ports:
       - "6767:6767"
@@ -130,18 +160,11 @@ services:
     volumes:
       - $BAZARR_CONFIG:/config
       - $BAZARR_HOME:/data
-
-  flaresolverr:
-    container_name: flaresolverr
-    restart: unless-stopped
-    image: ghcr.io/flaresolverr/flaresolverr:v3.3.21
-    ports:
-      - 8191:8191
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - UMASK=002
-      - TZ=$TZ_INFO
+    deploy:
+      resources:
+        limits:
+          cpus: 0.5
+          memory: 300M
 
   prometheus:
     container_name: prometheus
@@ -152,7 +175,7 @@ services:
     volumes:
       - ./prometheus:/etc/prometheus
     ports:
-      - 9090:9090
+      - 9097:9090
 
   node_exporter:
     container_name: node_exporter
@@ -164,3 +187,18 @@ services:
     restart: unless-stopped
     volumes:
       - "/:/host:ro,rslave"
+
+  pluto_api:
+    container_name: pluto-api
+    image: quay.io/kamuridesu/pluto-playlist-api
+    restart: unless-stopped
+    environment:
+      - TZ_INFO=$TZ_INFO
+      - TOTAL_DELAY_SECONDS=86400
+    ports:
+      - 9123:3000
+    deploy:
+      resources:
+        limits:
+          cpus: 0.3
+          memory: 200M
